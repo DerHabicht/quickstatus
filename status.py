@@ -3,6 +3,7 @@
 Usage:
     status set <status> [<time>]
     status clear
+    status list
 
 Options:
     -h --help   Show this screen.
@@ -74,6 +75,16 @@ def set_status(key, time=0, statuses=None, token=None):
     post_status(status, token)
 
 
+def list_statuses(statuses=None):
+    if not statuses:
+        with open('statuses.json', 'r') as file:
+            statuses = json.loads(file.read())
+
+    print("Available statuses:")
+    for key in sorted(statuses):
+        print(f'  {key}')
+
+
 if __name__ == '__main__':
     load_dotenv()
     args = docopt(__doc__, version=VERSION)
@@ -90,6 +101,8 @@ if __name__ == '__main__':
                     print('<time> must be an integer')
 
             set_status(args['<status>'], time)
+        elif args['list']:
+            list_statuses()
     except KeyError:
         print(f'{args["<status>"]} is not a valid status')
     except StatusUpdateError as err:
