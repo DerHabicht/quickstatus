@@ -1,0 +1,25 @@
+{
+  "pom": {
+    "status_text": "",
+    "status_emoji": ":tomato:"
+  },
+  "ic": {
+    "status_text": "",
+    "status_emoji": ":fire_engine:"
+  },
+  "meet": {
+    "status_text": "In a meeting",
+    "status_emoji": ":spiral_calendar_pad:",
+    "status_expiration": 60
+  },
+  "lunch": {
+    "status_text": "Out to lunch",
+    "status_emoji": ":poultry_leg",
+    "status_expiration": 60
+  },
+  "commute": {
+    "status_text": "Commuting",
+    "status_emoji": ":bus:",
+    "status_expiration": 60
+  }
+}
