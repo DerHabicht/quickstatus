@@ -14,9 +14,10 @@ conda env create environment.yml
 ### The Hard Way
 If you do not have/are not willing to set up Conda, you will need to have
 Python 3.6 and the following packages:
-    - docopt 0.6.2
-    - python-dotenv 0.10.1
-    - requests 2.21.0
+
+- docopt 0.6.2
+- python-dotenv 0.10.1
+- requests 2.21.0
 
 ## Setup
 Before you start using this utility, you will have to create a new Slack app.
@@ -38,7 +39,7 @@ If you installed your dependencies using Conda, activate the Conda environment
 by running:
 
 ```
-conda activate quickstatus
+conda activate autostatus
 ```
 
 Running `python status.py -h` will provide you with details on how to use the script.

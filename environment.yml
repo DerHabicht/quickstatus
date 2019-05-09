@@ -1,4 +1,4 @@
-name: quickstatus
+name: autostatus
 channels:
   - conda-forge
   - defaults
@@ -10,7 +10,6 @@ dependencies:
   - chardet=3.0.4=py36_1003
   - click=7.0=py_0
   - cryptography=2.6.1=py36h212c5bf_0
-  - docopt=0.6.2=py_1
   - idna=2.8=py36_1000
   - libcxx=8.0.0=2
   - libcxxabi=8.0.0=2
@@ -33,4 +32,5 @@ dependencies:
   - wheel=0.33.1=py36_0
   - xz=5.2.4=h1de35cc_1001
   - zlib=1.2.11=h1de35cc_1004
+prefix: /Users/the-hawk/anaconda3/envs/autostatus
 
