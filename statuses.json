@@ -1,29 +1,36 @@
 {
   "pom": {
-    "status_text": "",
-    "status_emoji": ":tomato:"
+    "status_text": "Focusing",
+    "status_emoji": ":tomato:",
+    "status_expiration": 25,
+    "disturb": false
   },
   "ic": {
-    "status_text": "",
-    "status_emoji": ":fire_engine:"
+    "status_text": "Dealing with PagerDuty",
+    "status_emoji": ":fire_engine:",
+    "disturb": true
   },
   "meet": {
     "status_text": "In a meeting",
     "status_emoji": ":spiral_calendar_pad:",
-    "status_expiration": 60
+    "status_expiration": 60,
+    "disturb": true
   },
   "lunch": {
     "status_text": "Out to lunch",
     "status_emoji": ":poultry_leg:",
-    "status_expiration": 60
+    "status_expiration": 60,
+    "disturb": true
   },
   "commute": {
     "status_text": "Commuting",
     "status_emoji": ":bus:",
-    "status_expiration": 60
+    "status_expiration": 60,
+    "disturb": true
   },
   "huddle": {
     "status_text": "Huddling",
-    "status_emoji": ":dugtrio:"
+    "status_emoji": ":dugtrio:",
+    "disturb": true
   }
 }
