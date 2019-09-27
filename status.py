@@ -1,11 +1,15 @@
 """Quickstatus.
 
 Usage:
+    status list
+    status clear
+    status set <status> [<time>]
+    status show <status>
     status dnd set <time>
     status dnd clear
-    status set <status> [<time>]
-    status clear
-    status list
+    status default clear
+    status default set <status> <time>
+    status default show
 
 Options:
     -h --help   Show this screen.
@@ -16,10 +20,11 @@ import os
 from datetime import datetime, timedelta
 from docopt import docopt
 from dotenv import load_dotenv
-from requests import post
+from pprint import PrettyPrinter
+from requests import get, post
 
 
-VERSION = 'Quickstatus 0.2.0'
+VERSION = '0.3.0'
 
 
 class DNDUpdateError(Exception):
@@ -36,6 +41,36 @@ class StatusUpdateError(Exception):
 
     def __str__(self):
         return f'unable to set status: {self.message}'
+
+
+def print_status(status):
+    p = PrettyPrinter(indent=2)
+    p.pprint(status)
+
+
+def parse_timestamp(time):
+    try:
+        time = datetime.strptime(time, '%Y-%m-%dT%H:%M')
+    except ValueError:
+        print('time must be formatted as YYYY-MM-DDTHH:MM')
+        exit(1)
+
+    return int(time.timestamp())
+
+
+def read_default_status():
+    try:
+        with open('.default', 'r') as file:
+            s = file.read()
+    except FileNotFoundError:
+        return None
+
+    try:
+        data = json.loads(s)
+    except json.JSONDecodeError:
+        return None
+
+    return data
 
 
 def post_dnd(time, token=None):
@@ -75,7 +110,7 @@ def post_clear_dnd(token=None):
                headers=headers,
                data=payload).json()
 
-    if not res['ok']:
+    if (not res['ok']) and (res['error'] != 'snooze_not_active'):
         raise(DNDUpdateError(f'clearing snooze failed {res["error"]}'))
 
 
@@ -99,16 +134,27 @@ def post_status(status, token=None):
 
 
 def clear_status(token=None):
-    status = {
-        'status_text': '',
-        'status_emoji': '',
-    }
+    if token is None:
+        token = os.getenv('TOKEN')
+
+    status = read_default_status()
+
+    if status is None:
+        status = {
+            'status_text': '',
+            'status_emoji': '',
+        }
+    else:
+        status['status_expiration'] = parse_timestamp(status['status_expiration'])
 
     post_status(status, token)
     post_clear_dnd(token)
 
 
 def set_status(key, time=None, statuses=None, token=None):
+    if token is None:
+        token = os.getenv('TOKEN')
+
     if not statuses:
         with open('statuses.json', 'r') as file:
             statuses = json.loads(file.read())
@@ -125,8 +171,13 @@ def set_status(key, time=None, statuses=None, token=None):
             time = 0
 
     if time:
-        expires = datetime.now() + timedelta(minutes=time)
-        status['status_expiration'] = int(expires.timestamp())
+        if isinstance(time, str):
+            status['status_expiration'] = parse_timestamp(time)
+        elif isinstance(time, int):
+            expires = datetime.now() + timedelta(minutes=time)
+            status['status_expiration'] = int(expires.timestamp())
+        else:
+            raise(StatusUpdateError('<time> must be a timestamp or an integer'))
 
     set_dnd = not status.get('disturb', True)
     if set_dnd and not time:
@@ -151,13 +202,47 @@ def list_statuses(statuses=None):
 
 def handle_dnd(args):
     if args['set']:
-        try:
+        t = args['<time>']
+        if isinstance(t, str):
+            time = parse_timestamp(t)
+        elif isinstance(t, int):
             time = int(args['<time>'])
-        except ValueError:
-            raise(DNDUpdateError('<time> must be an integer'))
+        else:
+            raise(DNDUpdateError('<time> must be a timestamp or an integer'))
         post_dnd(time)
     elif args['clear']:
         post_clear_dnd()
+
+
+def handle_default(args):
+    if args['set']:
+        with open('statuses.json', 'r') as file:
+            statuses = json.loads(file.read())
+
+        status = {}
+        try:
+            status = statuses[args['<status>']]
+        except KeyError:
+            print(f'{args["<status>"]} is not a valid status')
+            exit(1)
+
+        status['status_expiration'] = args['<time>']
+
+        with open('.default', 'w') as file:
+            file.write(json.dumps(status))
+
+        clear_status()
+    elif args['clear']:
+        if os.path.exists('.default'):
+            os.remove('.default')
+            clear_status()
+    elif args['show']:
+        d = read_default_status()
+
+        if d is not None:
+            print_status(d)
+        else:
+            print("No default status is currently set.")
 
 
 def handle_set_status(args):
@@ -166,17 +251,32 @@ def handle_set_status(args):
         try:
             time = int(args['<time>'])
         except ValueError:
-            raise(StatusUpdateError('<time> must be an integer'))
+            raise(StatusUpdateError('<time> must be a timestamp or an integer'))
 
     set_status(args['<status>'], time)
 
 
-if __name__ == '__main__':
-    load_dotenv()
-    args = docopt(__doc__, version=VERSION)
+def handle_show_status(args):
+    with open('statuses.json', 'r') as file:
+        statuses = json.loads(file.read())
 
     try:
-        if args['dnd']:
+        s = statuses[args['<status>']]
+    except KeyError:
+        print(f'"{args["<status>"]}" is not a valid status.')
+        return
+
+    print_status(s)
+
+
+if __name__ == '__main__':
+    load_dotenv()
+    args = docopt(__doc__, version='Quickstatus' + VERSION)
+
+    try:
+        if args['default']:
+            handle_default(args)
+        elif args['dnd']:
             handle_dnd(args)
         elif args['clear']:
             clear_status()
@@ -184,7 +284,9 @@ if __name__ == '__main__':
             handle_set_status(args)
         elif args['list']:
             list_statuses()
-    except KeyError:
+        elif args['show']:
+            handle_show_status(args)
+    except KeyError as err:
         print(f'{args["<status>"]} is not a valid status')
     except StatusUpdateError as err:
         print(err)
