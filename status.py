@@ -55,7 +55,7 @@ def parse_timestamp(time):
         print('time must be formatted as YYYY-MM-DDTHH:MM')
         exit(1)
 
-    return int(time.timestamp())
+    return (time > datetime.now()), int(time.timestamp())
 
 
 def read_default_status():
@@ -145,7 +145,14 @@ def clear_status(token=None):
             'status_emoji': '',
         }
     else:
-        status['status_expiration'] = parse_timestamp(status['status_expiration'])
+        valid, status['status_expiration'] = parse_timestamp(status['status_expiration'])
+        if not valid:
+            status = {
+                'status_text': '',
+                'status_emoji': '',
+            }
+            arg = {'set': False, 'clear': True, 'show': False}
+            handle_default(arg)
 
     post_status(status, token)
     post_clear_dnd(token)
@@ -246,14 +253,7 @@ def handle_default(args):
 
 
 def handle_set_status(args):
-    time = None
-    if args['<time>']:
-        try:
-            time = int(args['<time>'])
-        except ValueError:
-            raise(StatusUpdateError('<time> must be a timestamp or an integer'))
-
-    set_status(args['<status>'], time)
+    set_status(args['<status>'], args['<time>'])
 
 
 def handle_show_status(args):

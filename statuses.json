@@ -1,4 +1,9 @@
 {
+  "home": {
+    "status_text": "Working remotely",
+    "status_emoji": ":house_with_garden:",
+    "disturb": true
+  },
   "travel": {
     "status_text": "Travelling",
     "status_emoji": ":airplane:",
