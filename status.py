@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from pprint import PrettyPrinter
 
 from dnd import clear_dnd, set_dnd
+from expiration import Expiration
 
 
 class MalformedStatusDictError(Exception):
@@ -10,14 +11,6 @@ class MalformedStatusDictError(Exception):
 
     def __str__(self):
         return self.message
-
-
-class TimeFormatError(Exception):
-    def __init__(self, timestamp):
-        self.timestamp = timestamp
-
-    def __str__(self):
-        return f'{self.timestamp} is not formatted as YYYY-MM-DDTHH:MM'
 
 
 class Status:
@@ -29,15 +22,17 @@ class Status:
 
     def __str__(self):
         p = PrettyPrinter(indent=2)
-        d = {
+        return p.pformat(self.as_dict())
+
+    def as_dict(self):
+        return {
             'status_text': self.status_text,
             'status_emoji': self.status_emoji,
             'status_expiration': self.status_expiration.as_timestamp(),
             'disturb': self.disturb,
         }
-        return p.pformat(d)
 
-    def as_dict(self):
+    def as_request_body(self):
         return {
             'status_text': self.status_text,
             'status_emoji': self.status_emoji,
@@ -76,48 +71,12 @@ class Status:
         return cls(status_text, status_emoji, status_expiration, disturb)
 
 
-class Expiration:
-    def __init__(self, time):
-        self.time = time
-
-    def as_timestamp(self):
-        if self.time is None:
-            return None
-
-        return self.time.strftime('%Y-%m-%dT%H:%M')
-
-    def as_int(self):
-        if self.time is None:
-            return 0
-
-        return int(self.time.timestamp())
-
-    def is_expired(self):
-        return self.time < datetime.now()
-
-    @classmethod
-    def from_timestamp(cls, timestamp):
-        if timestamp is None:
-            return None
-
-        try:
-            time = datetime.strptime(timestamp, '%Y-%m-%dT%H:%M')
-        except ValueError:
-            raise(TimeFormatError(timestamp))
-
-        return cls(time)
-
-    @classmethod
-    def from_minutes(cls, minutes):
-        return cls(datetime.now() + timedelta(minutes=minutes))
-
-
 def print_statuses_list(statuses):
     for key in statuses:
         print(f'  {key}')
 
 
-def set_status(slack, status, time):
+def set_status(slack, status, time=None):
     if time is not None:
         try:
             t = int(time)
@@ -127,18 +86,19 @@ def set_status(slack, status, time):
 
         status.status_expiration = time
 
-    slack.post_status(status.as_dict())
+    slack.post_status(status.as_request_body())
+
     if not status.disturb:
-        set_dnd(slack, time)
+        set_dnd(slack, status.status_expiration)
 
 
 def clear_status(slack, default_status=None, default_dnd=None):
-    if default_status is None:
+    if default_status is None or default_status.status_expiration.is_expired():
         status = Status.empty()
     else:
         status = default_status
 
-    slack.post_status(status.as_dict())
+    slack.post_status(status.as_request_body())
     if not status.disturb:
         set_dnd(slack, status.time)
     elif default_dnd is not None:
@@ -147,5 +107,6 @@ def clear_status(slack, default_status=None, default_dnd=None):
         clear_dnd(slack)
 
 
+# FIXME: Figure out why get_status returns odd date values
 def get_status(slack):
     return Status.from_dict(slack.get_status())

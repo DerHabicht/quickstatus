@@ -19,6 +19,14 @@ from docopt import docopt
 from pprint import PrettyPrinter
 
 from config import Config
+from default import (
+    clear_default,
+    set_default,
+)
+from dnd import (
+    clear_default_dnd,
+    set_default_dnd,
+)
 from status import (
     clear_status,
     get_status,
@@ -41,20 +49,20 @@ class ArgumentError(Exception):
 
 def handle_default(config, args):
     if args['clear']:
-        pass
+        clear_default(config)
     elif args['set']:
-        pass
+        set_default(config, args['<status>'], args['<time>'])
     elif args['show']:
-        pass
+        print(config.default_status)
     else:
         raise(ArgumentError(args))
 
 
 def handle_dnd(config, args):
     if args['set']:
-        pass
+        set_default_dnd(config, args['<time>'])
     elif args['clear']:
-        pass
+        clear_default_dnd(config)
     else:
         raise(ArgumentError(args))
 
@@ -66,7 +74,7 @@ def handle_status(config, args):
         try:
             status = config.statuses[args['<status>']]
         except KeyError:
-            print(f'{args["<status>"]} is not a vaild status.')
+            print(f'{args["<status>"]} is not a vaild status. Valid statuses are:')
             print_statuses_list(config.statuses)
             exit(1)
 
@@ -75,7 +83,13 @@ def handle_status(config, args):
         if args['<status>'] is None:
             print(get_status(config.slack))
         else:
-            print(config.statuses.get(args['<status>'], f'{args["<status>"]} is not a valid status'))
+            try:
+                print(config.statuses.get(args['<status>']))
+            except KeyError:
+                print(f'{args["<status>"]} is not a vaild status. Valid statuses are:')
+                print_statuses_list(config.statuses)
+                exit(1)
+
     elif args['list']:
         print_statuses_list(config.statuses)
 
