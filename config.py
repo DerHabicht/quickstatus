@@ -20,10 +20,10 @@ class ConfigLoadError(Exception):
 
 
 class Config:
-    def __init__(self, slack, statuses, default_status, default_dnd):
+    def __init__(self, slack, statuses, default_statuses, default_dnd):
         self.slack = slack
         self.statuses = statuses
-        self.default_status = default_status
+        self.default_statuses = default_statuses
         self.default_dnd = default_dnd
 
     def write_config(self):
@@ -31,14 +31,16 @@ class Config:
 
         defaults = {}
 
-        if self.default_status is not None:
-            defaults['status'] = self.default_status.as_dict()
+        if len(self.default_statuses) > 0:
+            defaults['statuses'] = []
+            for status in self.default_statuses:
+                defaults['statuses'].append(status.as_dict())
 
         if self.default_dnd is not None:
             defaults['dnd'] = self.default_dnd.as_timestamp()
 
         with open(defaults_path, 'w') as file:
-            file.write(json.dumps(defaults))
+            file.write(json.dumps(defaults, indent=2))
 
     @classmethod
     def init(cls):
@@ -50,21 +52,32 @@ class Config:
         statuses_raw = Config.read_config('statuses')
         statuses = {key: Status.from_dict(statuses_raw[key]) for key in statuses_raw}
 
-        # Read default status and do not disturb
+        # Read default status stack
+        default_statuses = []
         defaults = Config.read_config('defaults')
-        default_status = Status.from_dict(defaults.get('status', None))
+        try:
+            for status in defaults['statuses']:
+                default_statuses.append(Status.from_dict(status))
+        except KeyError:
+            defaults['statuses'] = []
+
+        # Read default Do Not Disturb
         default_dnd = Expiration.from_timestamp(defaults.get('dnd', None))
 
         # If either the default status or default DND are expired, the config will need to be rewritten
         rewrite = False
-        if default_status is not None and default_status.status_expiration.is_expired():
-            default_status = None
-            rewrite = True
+        while len(default_statuses) > 0:
+            if default_statuses[-1].status_expiration.is_expired():
+                default_statuses.pop()
+                rewrite = True
+            else:
+                break
+
         if default_dnd is not None and default_dnd.is_expired():
             default_dnd = None
             rewrite = True
 
-        config = cls(slack, statuses, default_status, default_dnd)
+        config = cls(slack, statuses, default_statuses, default_dnd)
 
         # Rewrite the config, if needed
         if rewrite:

@@ -1,4 +1,3 @@
-from datetime import datetime, timedelta
 from pprint import PrettyPrinter
 
 from dnd import clear_dnd, set_dnd
@@ -90,17 +89,21 @@ def set_status(slack, status, time=None):
 
     if not status.disturb:
         set_dnd(slack, status.status_expiration)
-
-
-def clear_status(slack, default_status=None, default_dnd=None):
-    if default_status is None or default_status.status_expiration.is_expired():
-        status = Status.empty()
     else:
-        status = default_status
+        clear_dnd(slack)
+
+
+def clear_status(slack, default_statuses=(), default_dnd=None):
+    while len(default_statuses) > 0:
+        if not default_statuses[-1].status_expiration.is_expired():
+            status = default_statuses[-1]
+            break
+    else:
+        status = Status.empty()
 
     slack.post_status(status.as_request_body())
     if not status.disturb:
-        set_dnd(slack, status.time)
+        set_dnd(slack, status.status_expiration)
     elif default_dnd is not None:
         set_dnd(slack, default_dnd)
     else:

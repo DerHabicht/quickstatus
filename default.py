@@ -7,7 +7,7 @@ from status import (
 )
 
 
-def set_default(config, status, time):
+def add_default(config, status, time):
     try:
         s = config.statuses[status]
     except KeyError:
@@ -23,12 +23,20 @@ def set_default(config, status, time):
 
     s.status_expiration = t
 
-    config.default_status = s
+    config.default_statuses.append(s)
     config.write_config()
     set_status(config.slack, s)
 
 
-def clear_default(config):
-    config.default_status = None
+def pop_default(config):
+    try:
+        config.default_statuses.pop()
+    except IndexError:
+        pass
+
     config.write_config()
-    clear_status(config.slack)
+
+    if len(config.default_statuses) > 0:
+        set_status(config.slack, config.default_statuses[-1])
+    else:
+        clear_status(config.slack)

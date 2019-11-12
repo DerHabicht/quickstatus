@@ -7,9 +7,9 @@ Usage:
     status show [<status>]
     status dnd set <time>
     status dnd clear
-    status default set <status> <time>
-    status default clear
-    status default show
+    status default add <status> <time>
+    status default pop
+    status default list
 
 Options:
     -h --help   Show this screen.
@@ -20,8 +20,8 @@ from pprint import PrettyPrinter
 
 from config import Config
 from default import (
-    clear_default,
-    set_default,
+    pop_default,
+    add_default,
 )
 from dnd import (
     clear_default_dnd,
@@ -36,6 +36,7 @@ from status import (
 
 
 VERSION = '0.3.0'
+P = PrettyPrinter(indent=2)
 
 
 class ArgumentError(Exception):
@@ -43,17 +44,19 @@ class ArgumentError(Exception):
         self.args = args
 
     def __str__(self):
-        p = PrettyPrinter(indent=2)
-        return f'an invalid set of arguments was passed to the handler:\n{p.pformat(args)}\n'
+        return f'an invalid set of arguments was passed to the handler:\n{P.pformat(args)}\n'
 
 
 def handle_default(config, args):
-    if args['clear']:
-        clear_default(config)
-    elif args['set']:
-        set_default(config, args['<status>'], args['<time>'])
-    elif args['show']:
-        print(config.default_status)
+    if args['pop']:
+        pop_default(config)
+    elif args['add']:
+        add_default(config, args['<status>'], args['<time>'])
+    elif args['list']:
+        d = []
+        for status in config.default_statuses:
+            d.append(status.as_dict())
+        P.pprint(d)
     else:
         raise(ArgumentError(args))
 
@@ -69,7 +72,7 @@ def handle_dnd(config, args):
 
 def handle_status(config, args):
     if args['clear']:
-        clear_status(config.slack, config.default_status, config.default_dnd)
+        clear_status(config.slack, config.default_statuses, config.default_dnd)
     elif args['set']:
         try:
             status = config.statuses[args['<status>']]
