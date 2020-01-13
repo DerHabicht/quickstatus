@@ -29,7 +29,7 @@ import (
 var setCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set a status in Slack.",
-	Long: `Set a status in Slack from the configured list of "canned" statuses.`,
+	Long:  `Set a status in Slack from the configured list of "canned" statuses.`,
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 }

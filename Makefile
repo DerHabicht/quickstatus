@@ -14,8 +14,7 @@ bin/test: main.go $(foreach f, $(SRC), $(f).go)
 
 .PHONY: run
 run:
-	echo 'Running time!'
-	go run ${LDFLAGS} main.go
+	@go run ${LDFLAGS} main.go
 
 .PHONY: clean
 clean:

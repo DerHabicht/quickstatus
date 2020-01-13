@@ -29,7 +29,7 @@ import (
 var listCmd = &cobra.Command{
 	Use:   "list",
 	Short: "Print available statuses.",
-	Long: `Print the currently configured list of canned statuses.`,
+	Long:  `Print the currently configured list of canned statuses.`,
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 }

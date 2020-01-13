@@ -29,7 +29,7 @@ import (
 var clearCmd = &cobra.Command{
 	Use:   "clear",
 	Short: "Clear the current Slack status.",
-	Long: `Clear the current Slack status.`,
+	Long:  `Clear the current Slack status.`,
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 }
