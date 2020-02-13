@@ -1,11 +1,13 @@
-package slack
+package agent
 
-import "time"
+import (
+	"time"
+)
 
 type Status struct {
 	StatusText           string     `json:"status_text"`
 	StatusEmoji          string     `json:"status_emoji"`
-	StatusExpiration     *int       `json:"status_expiration,omitempty"`
+	StatusExpiration     *int64     `json:"status_expiration,omitempty"`
 	StatusExpirationTime *time.Time `json:"status_expiration_time,omitempty"`
 	Disturb              bool       `json:"disturb"`
 }

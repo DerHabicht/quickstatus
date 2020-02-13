@@ -30,7 +30,7 @@ var dndCmd = &cobra.Command{
 	Use:   "dnd",
 	Short: "Set Do Not Disturb on Slack",
 	Long: `Turn off all Slack notifications for a given period of time. If no period of time is specified, then the
-number of minutes in the 'default_dnd' field of the config is used.`,
+number of minutes in the 'default_dnd' field of the context is used.`,
 	Run: func(cmd *cobra.Command, args []string) {
 	},
 }

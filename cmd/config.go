@@ -1,17 +1,16 @@
 package cmd
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/mitchellh/go-homedir"
-	"github.com/pkg/errors"
 	"github.com/spf13/viper"
 
-	"github.com/derhabicht/quickstatus/slack"
+	"github.com/derhabicht/quickstatus/context"
 )
 
+// Default canned status list for generating a new context.
 const defaultCannedStatuses = `{
   "commute": {
     "status_text": "Commuting",
@@ -59,34 +58,13 @@ const defaultCannedStatuses = `{
   }
 }`
 
-var C Context
-
-type Context struct {
-	CannedStatuses      map[string]slack.Status
-	DefaultStatuses     []slack.Status
-}
-
-func NewContext() (Context, error) {
-	c := Context{}
-
-	c.CannedStatuses = make(map[string]slack.Status)
-	if err := json.Unmarshal([]byte(viper.GetString("canned_statuses")), &c.CannedStatuses); err != nil {
-		return c, errors.WithMessage(err, "unable to parse canned statuses")
-	}
-
-	if err := json.Unmarshal([]byte(viper.GetString("default_statuses")), &c.DefaultStatuses); err != nil {
-		return c, errors.WithMessage(err, "unable to parse default statuses")
-	}
-
-	return c, nil
-}
-
 func setViperDefaults() {
-	viper.SetDefault("slack_api_token", "")
-	viper.SetDefault("dnd_default_timeout", 60)
-	viper.SetDefault("canned_statuses", defaultCannedStatuses)
-	viper.SetDefault("default_statuses", "[]")
+	viper.SetDefault(context.SlackAPIToken, "")
+	viper.SetDefault(context.CannedStatuses, defaultCannedStatuses)
+	viper.SetDefault(context.DefaultStatuses, "[]")
 }
+
+var C context.Context
 
 func initConfig() {
 	setViperDefaults()
@@ -106,18 +84,15 @@ func initConfig() {
 	}
 
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Failed to read config file")
+		fmt.Println("Failed to read context file")
 		if err := viper.WriteConfigAs(fmt.Sprintf("%s/.quickstatus.yaml", home)); err != nil {
-			fmt.Printf("Could not write config file: %s", err)
+			fmt.Printf("Could not write context file: %s", err)
 		}
 	}
 
 	viper.AutomaticEnv()
 
-	var err error
-	C, err = NewContext()
-	if err != nil {
+	if err := C.New(); err != nil {
 		panic(err)
 	}
 }
-

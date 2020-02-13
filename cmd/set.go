@@ -22,7 +22,9 @@ THE SOFTWARE.
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
+	"os"
 )
 
 // setCmd represents the set command
@@ -30,7 +32,29 @@ var setCmd = &cobra.Command{
 	Use:   "set",
 	Short: "Set a status in Slack.",
 	Long:  `Set a status in Slack from the configured list of "canned" statuses.`,
+	Args:  cobra.RangeArgs(1, 2),
 	Run: func(cmd *cobra.Command, args []string) {
+		status, ok := C.CannedStatuses[args[0]]
+		if !ok {
+			fmt.Printf("%s is not a valid status. Valid statuses are:\n", args[0])
+			C.ListValidStatuses()
+			os.Exit(1)
+		}
+
+		var expires int64
+		if status.StatusExpiration != nil {
+			expires = 0
+		} else {
+			expires = *status.StatusExpiration
+		}
+
+		if err := C.Agent.SetUserCustomStatus(
+			status.StatusText,
+			status.StatusEmoji,
+			expires,
+		); err != nil {
+
+		}
 	},
 }
 

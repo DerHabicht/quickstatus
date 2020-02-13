@@ -1,4 +1,4 @@
-default: bin/test
+default: bin/status
 
 # Credit to https://github.com/commissure/go-git-build-vars for giving me a starting point for this.
 SRC = $(basename $(wildcard */*.go))
@@ -9,8 +9,8 @@ GIT_DIRTY = `git diff-index --quiet HEAD -- || echo 'x-'`
 
 LDFLAGS = -ldflags "-s -X main.BuildTime=${BUILD_TIME} -X main.GitRevision=${GIT_DIRTY}${GIT_REVISION} -X main.GitBranch=${GIT_BRANCH}"
 
-bin/test: main.go $(foreach f, $(SRC), $(f).go)
-	go build ${LDFLAGS} -o bin/test
+bin/status: main.go $(foreach f, $(SRC), $(f).go)
+	go build ${LDFLAGS} -o bin/status
 
 .PHONY: run
 run:
@@ -18,4 +18,4 @@ run:
 
 .PHONY: clean
 clean:
-	rm bin/test
+	rm bin/status

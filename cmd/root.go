@@ -61,9 +61,9 @@ func init() {
 
 	rootCmd.PersistentFlags().StringVar(
 		&cfgFile,
-		"config",
+		"context",
 		"",
-		"config file (default is $HOME/.quickstatus.yaml)",
+		"context file (default is $HOME/.quickstatus.yaml)",
 	)
 
 	rootCmd.Flags().BoolVar(
